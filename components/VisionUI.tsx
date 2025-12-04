@@ -1,16 +1,7 @@
-import React, { useRef } from 'react';
-import { motion, useMotionTemplate, useMotionValue, HTMLMotionProps } from 'framer-motion';
-import { playSound } from '../services/audioService';
+import React from 'react';
+import { motion } from 'framer-motion';
 
-interface GlassPanelProps {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-  variant?: 'default' | 'plain';
-  onClick?: React.MouseEventHandler<HTMLDivElement>;
-}
-
-export const GlassPanel: React.FC<GlassPanelProps> = ({ children, className = '', delay = 0, variant = 'default', onClick }) => {
+export const GlassPanel = ({ children, className = '', delay = 0, variant = 'default', onClick }) => {
   return (
     <motion.div
       onClick={onClick}
@@ -30,33 +21,33 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({ children, className = ''
         ${className}
       `}
     >
-        {/* Subtle top sheen */}
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent opacity-50 pointer-events-none" />
         {children}
     </motion.div>
   );
 };
 
-interface VisionButtonProps extends HTMLMotionProps<"button"> {
-  children?: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'icon';
-  className?: string;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
-  type?: "button" | "submit" | "reset";
-  disabled?: boolean;
-}
+export const VisionButton = ({ children, className, variant = 'primary', onClick, disabled, ...props }) => {
+  const handleHover = () => {
+      if (!disabled) {
+          const play = (window as any).playSound;
+          if (play) play('hover');
+      }
+  };
 
-export const VisionButton: React.FC<VisionButtonProps> = ({ children, className, variant = 'primary', onClick, disabled, ...props }) => {
+  const handleClick = (e) => {
+    if (disabled) return;
+    const play = (window as any).playSound;
+    if (play) play('click');
+    onClick && onClick(e);
+  };
+
   return (
     <motion.button
       whileHover={!disabled ? { scale: 1.02, y: -1 } : undefined}
       whileTap={!disabled ? { scale: 0.96, y: 1 } : undefined}
-      onHoverStart={() => !disabled && playSound('hover')}
-      onClick={(e) => {
-        if (disabled) return;
-        playSound('click');
-        onClick && onClick(e);
-      }}
+      onHoverStart={handleHover}
+      onClick={handleClick}
       disabled={disabled}
       className={`
         relative overflow-hidden rounded-[20px] font-medium transition-all duration-300
@@ -77,7 +68,7 @@ export const VisionButton: React.FC<VisionButtonProps> = ({ children, className,
   );
 };
 
-export const FloatingText: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({ children, className, delay = 0 }) => {
+export const FloatingText = ({ children, className, delay = 0 }) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -90,8 +81,7 @@ export const FloatingText: React.FC<{ children: React.ReactNode; className?: str
     )
 }
 
-// 3D Tilt Card
-export const TiltCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => {
+export const TiltCard = ({ children, className }) => {
     return (
         <motion.div
             whileHover={{ y: -4 }}
@@ -101,4 +91,9 @@ export const TiltCard: React.FC<{ children: React.ReactNode; className?: string 
             {children}
         </motion.div>
     )
-}
+};
+
+(window as any).GlassPanel = GlassPanel;
+(window as any).VisionButton = VisionButton;
+(window as any).FloatingText = FloatingText;
+(window as any).TiltCard = TiltCard;

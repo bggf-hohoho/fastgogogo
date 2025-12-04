@@ -1,33 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, X, Check, Loader2, Keyboard, ChevronDown, Edit2 } from 'lucide-react';
-import { Language, Transaction, Category } from '../types';
-import { LOCALIZATION, CATEGORY_LABELS } from '../constants';
-import { parseExpenseVoiceInput, VoiceParseResult } from '../services/geminiService';
+import { Mic, X, Check, Loader2, Keyboard, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GlassPanel, VisionButton } from './VisionUI';
-import { playSound } from '../services/audioService';
 
-interface VoiceInputProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (expense: Partial<Transaction>) => void;
-  language: Language;
-}
+const VoiceInput = ({ isOpen, onClose, onSave, language }) => {
+  // Access globals lazily
+  const LOCALIZATION = (window as any).LOCALIZATION;
+  const CATEGORY_LABELS = (window as any).CATEGORY_LABELS;
+  const Category = (window as any).Category;
+  const parseExpenseVoiceInput = (window as any).parseExpenseVoiceInput;
+  const playSound = (window as any).playSound;
+  const GlassPanel = (window as any).GlassPanel;
+  const VisionButton = (window as any).VisionButton;
 
-const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, language }) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [parsedData, setParsedData] = useState<Partial<Transaction> | null>(null);
-  const [alternatives, setAlternatives] = useState<Category[]>([]);
-  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
+  const [parsedData, setParsedData] = useState(null);
+  const [alternatives, setAlternatives] = useState([]);
+  const [inputMode, setInputMode] = useState('voice');
   const [showAllCategories, setShowAllCategories] = useState(false);
   
-  const recognitionRef = useRef<any>(null);
-  const t = (key: string) => LOCALIZATION[key][language];
-  const tCat = (cat: Category) => CATEGORY_LABELS[cat][language];
+  const recognitionRef = useRef(null);
+  const t = (key) => LOCALIZATION[key][language];
+  const tCat = (cat) => CATEGORY_LABELS[cat][language];
 
-  // Initialize Speech Recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -55,7 +51,6 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
     }
   }, [language]);
 
-  // Reset state when opened
   useEffect(() => {
     if (isOpen) {
       playSound('open');
@@ -64,7 +59,6 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
       setAlternatives([]);
       setShowAllCategories(false);
       setIsProcessing(false);
-      // Auto start listening
       if (inputMode === 'voice' && recognitionRef.current) {
          try {
              recognitionRef.current.start();
@@ -75,7 +69,7 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
     }
   }, [isOpen, inputMode]);
 
-  const handleProcessText = async (text: string) => {
+  const handleProcessText = async (text) => {
     setIsProcessing(true);
     const result = await parseExpenseVoiceInput(text);
     setIsProcessing(false);
@@ -88,19 +82,19 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
     }
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = (e) => {
       e.preventDefault();
       if(transcript.trim()) handleProcessText(transcript);
   }
 
-  const handleCategoryChange = (cat: Category) => {
+  const handleCategoryChange = (cat) => {
       if (parsedData) {
           setParsedData({ ...parsedData, category: cat });
           playSound('click');
       }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !GlassPanel) return null;
 
   return (
     <AnimatePresence>
@@ -111,8 +105,6 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
       >
         <GlassPanel className="w-full max-w-sm mx-4 p-8 relative overflow-visible border-white/20 shadow-2xl bg-white/90 dark:bg-premium-card/90">
-          
-          {/* Close Button */}
           <button 
             onClick={onClose} 
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:text-white/50 dark:hover:text-white transition-colors"
@@ -120,7 +112,6 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
             <X size={24} />
           </button>
 
-          {/* Mode Switcher */}
           <div className="absolute top-4 left-4">
              <button onClick={() => setInputMode(prev => prev === 'voice' ? 'text' : 'voice')} className="text-blue-500 dark:text-blue-400 text-sm font-medium flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-300">
                 {inputMode === 'voice' ? <Keyboard size={16}/> : <Mic size={16}/>}
@@ -129,7 +120,6 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
           </div>
 
           <div className="flex flex-col items-center justify-center min-h-[300px] text-center mt-6">
-            
             {!parsedData ? (
                <>
                  {isProcessing ? (
@@ -147,7 +137,6 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
                      {inputMode === 'voice' ? (
                          <>
                            <div className="relative mb-8">
-                                {/* Breathing Glow Effect */}
                                 <motion.div 
                                     animate={{ scale: isListening ? [1, 1.5, 1] : 1, opacity: isListening ? 0.4 : 0 }}
                                     transition={{ repeat: Infinity, duration: 2 }}
@@ -202,7 +191,6 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
                         <span className="font-semibold text-xl text-gray-900 dark:text-white">${parsedData.amount}</span>
                     </div>
                     
-                    {/* Category Selection with Alternatives */}
                     <div className="flex flex-col gap-2">
                         <div className="flex justify-between items-center">
                             <span className="text-gray-500 dark:text-gray-400 text-sm">Category</span>
@@ -215,7 +203,6 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
                             </button>
                         </div>
                         
-                        {/* Alternatives Chips */}
                         {!showAllCategories && alternatives.length > 0 && (
                             <div className="flex justify-end gap-2 flex-wrap animate-in fade-in slide-in-from-top-1">
                                 <span className="text-[10px] text-gray-400 dark:text-gray-500 self-center uppercase tracking-wide">Or:</span>
@@ -231,10 +218,9 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
                             </div>
                         )}
 
-                        {/* Full Category List (Toggle) */}
                         {showAllCategories && (
                             <div className="grid grid-cols-2 gap-2 mt-2 p-2 bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-xl max-h-48 overflow-y-auto no-scrollbar animate-in zoom-in-95 origin-top-right shadow-xl">
-                                {Object.values(Category).map(cat => (
+                                {Object.values(Category).map((cat: any) => (
                                     <button
                                         key={cat}
                                         onClick={() => {
@@ -261,7 +247,6 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
                 </div>
               </div>
             )}
-
           </div>
         </GlassPanel>
       </motion.div>
@@ -269,4 +254,4 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ isOpen, onClose, onSave, langua
   );
 };
 
-export default VoiceInput;
+(window as any).VoiceInput = VoiceInput;

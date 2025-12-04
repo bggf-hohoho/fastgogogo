@@ -3,31 +3,32 @@ export type Theme = 'light' | 'dark';
 export type TransactionType = 'expense' | 'income';
 export type SoundStyle = 'glass' | 'digital' | 'thump' | 'clean' | 'bubble' | 'air' | 'pixel' | 'chime' | 'wood' | 'spark' | 'mute';
 
-export enum Category {
-  // Expenses
-  Food = 'Food',
-  Clothing = 'Clothing',
-  Housing = 'Housing',
-  Transportation = 'Transportation',
-  Entertainment = 'Entertainment',
-  Shopping = 'Shopping',
-  Essentials = 'Essentials',
-  Others = 'Others',
-  // Income
-  Salary = 'Salary',
-  Investment = 'Investment',
-  Gift = 'Gift',
-  SideHustle = 'SideHustle'
-}
+export const Category = {
+  Food: 'Food',
+  Clothing: 'Clothing',
+  Housing: 'Housing',
+  Transportation: 'Transportation',
+  Entertainment: 'Entertainment',
+  Shopping: 'Shopping',
+  Essentials: 'Essentials',
+  Others: 'Others',
+  Salary: 'Salary',
+  Investment: 'Investment',
+  Gift: 'Gift',
+  SideHustle: 'SideHustle'
+};
+
+// Expose to window for other scripts
+(window as any).Category = Category;
 
 export interface Transaction {
   id: string;
   item: string;
   amount: number;
-  timestamp: string; // ISO string
-  category: Category;
+  timestamp: string; 
+  category: string;
   type: TransactionType;
-  deletedAt?: string | null; // For Trash Bin
+  deletedAt?: string | null; 
   isRecurring?: boolean;
   tripId?: string | null;
 }
@@ -37,8 +38,8 @@ export interface Subscription {
   name: string;
   amount: number;
   cycle: 'monthly' | 'quarterly' | 'yearly';
-  nextPaymentDate: string; // ISO string
-  category: Category;
+  nextPaymentDate: string; 
+  category: string;
 }
 
 export interface Trip {
@@ -47,13 +48,6 @@ export interface Trip {
   startDate: string;
   endDate: string;
   isActive: boolean;
-}
-
-export interface ExpenseSummary {
-  week_total: number;
-  month_total: number;
-  year_total: number;
-  categories: Record<string, number>;
 }
 
 export interface AISummary {

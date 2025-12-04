@@ -1,28 +1,18 @@
 import React, { useState } from 'react';
-import { Trash2, Repeat, Plane, RefreshCcw, ArrowLeft, CheckCircle, Undo2 } from 'lucide-react';
-import { Transaction, Subscription, Trip, Language, Category } from '../types';
-import { LOCALIZATION } from '../constants';
-import { GlassPanel, VisionButton, FloatingText } from './VisionUI';
+import { Trash2, Repeat, Plane, ArrowLeft, Undo2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface ToolsViewProps {
-  transactions: Transaction[];
-  subscriptions: Subscription[];
-  trip: Trip | null;
-  language: Language;
-  onRestore: (id: string) => void;
-  onAddSub: (sub: Subscription) => void;
-  onSetTrip: (trip: Trip | null) => void;
-}
+const ToolsView = ({ transactions, subscriptions, trip, language, onRestore, onAddSub, onSetTrip }) => {
+  const LOCALIZATION = (window as any).LOCALIZATION;
+  const GlassPanel = (window as any).GlassPanel;
+  const VisionButton = (window as any).VisionButton;
+  const Category = (window as any).Category;
 
-const ToolsView: React.FC<ToolsViewProps> = ({ transactions, subscriptions, trip, language, onRestore, onAddSub, onSetTrip }) => {
-  const [activeTool, setActiveTool] = useState<'menu' | 'trash' | 'subs' | 'travel'>('menu');
+  const [activeTool, setActiveTool] = useState('menu');
   const [newSubName, setNewSubName] = useState('');
   const [newSubAmount, setNewSubAmount] = useState('');
 
-  const t = (key: string) => LOCALIZATION[key][language];
-
-  // --- SUBVIEWS ---
+  const t = (key) => LOCALIZATION[key][language];
 
   const TrashList = () => {
     const deleted = transactions.filter(t => t.deletedAt);
@@ -36,7 +26,7 @@ const ToolsView: React.FC<ToolsViewProps> = ({ transactions, subscriptions, trip
                     <GlassPanel key={t.id} className="p-3 flex justify-between items-center bg-red-50 !border-red-200 dark:!bg-red-900/10 dark:border-red-500/20">
                         <div>
                             <p className="text-gray-900 dark:text-white">{t.item}</p>
-                            <p className="text-xs text-red-500 dark:text-red-300">Deleted: {new Date(t.deletedAt!).toLocaleDateString()}</p>
+                            <p className="text-xs text-red-500 dark:text-red-300">Deleted: {new Date(t.deletedAt).toLocaleDateString()}</p>
                         </div>
                         <button onClick={() => onRestore(t.id)} className="p-2 bg-white/50 dark:bg-white/10 rounded-full hover:bg-white dark:hover:bg-white/20 text-red-600 dark:text-white shadow-sm">
                             <Undo2 size={16} />
@@ -113,7 +103,7 @@ const ToolsView: React.FC<ToolsViewProps> = ({ transactions, subscriptions, trip
       );
   }
 
-  // --- MAIN MENU ---
+  if (!GlassPanel) return null;
 
   return (
     <div className="h-full pt-12 px-4 pb-24">
@@ -175,4 +165,4 @@ const ToolsView: React.FC<ToolsViewProps> = ({ transactions, subscriptions, trip
 
 const PlusIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>;
 
-export default ToolsView;
+(window as any).ToolsView = ToolsView;

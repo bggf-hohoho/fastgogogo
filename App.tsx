@@ -1,37 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { Home, BarChart2, Settings, Sun, Moon, Calendar, Grid, Volume2, Check } from 'lucide-react';
-import { Language, Transaction, Theme, Subscription, Trip, Category, SoundStyle } from './types';
-import { LOCALIZATION, MOCK_INITIAL_DATA, SOUND_STYLES } from './constants';
-import HomeView from './components/HomeView';
-import StatsView from './components/StatsView';
-import CalendarView from './components/CalendarView';
-import ToolsView from './components/ToolsView';
-import VoiceInput from './components/VoiceInput';
-import { VisionButton, GlassPanel } from './components/VisionUI';
-import { playSound, setSoundStyle } from './services/audioService';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Ensure Mock Data conforms to new Transaction Type
-const INITIAL_DATA: Transaction[] = MOCK_INITIAL_DATA.map(d => ({
-    ...d,
-    type: (d as any).type || 'expense', 
-    tripId: null,
-    deletedAt: null
-}));
+const App = () => {
+  // Access globals inside component to ensure scripts are loaded
+  const LOCALIZATION = (window as any).LOCALIZATION;
+  const MOCK_INITIAL_DATA = (window as any).MOCK_INITIAL_DATA;
+  const SOUND_STYLES = (window as any).SOUND_STYLES;
+  const HomeView = (window as any).HomeView;
+  const StatsView = (window as any).StatsView;
+  const CalendarView = (window as any).CalendarView;
+  const ToolsView = (window as any).ToolsView;
+  const VoiceInput = (window as any).VoiceInput;
+  const GlassPanel = (window as any).GlassPanel;
+  const playSound = (window as any).playSound;
+  const setSoundStyle = (window as any).setSoundStyle;
 
-const App: React.FC = () => {
-  // Global State
-  const [language, setLanguage] = useState<Language>('zh-TW');
-  const [theme, setTheme] = useState<Theme>('dark');
-  const [soundStyle, setSoundStyleState] = useState<SoundStyle>('glass');
-  const [activeTab, setActiveTab] = useState<'home' | 'calendar' | 'tools' | 'stats' | 'settings'>('home');
+  const [language, setLanguage] = useState('zh-TW');
+  const [theme, setTheme] = useState('dark');
+  const [soundStyle, setSoundStyleState] = useState('glass');
+  const [activeTab, setActiveTab] = useState('home');
   
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_DATA);
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [activeTrip, setActiveTrip] = useState<Trip | null>(null);
+  const [transactions, setTransactions] = useState(() => {
+     // Lazy initialization of data
+     if (!MOCK_INITIAL_DATA) return [];
+     return MOCK_INITIAL_DATA.map(d => ({
+        ...d,
+        type: d.type || 'expense', 
+        tripId: null,
+        deletedAt: null
+     }));
+  });
+  
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [activeTrip, setActiveTrip] = useState(null);
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
 
-  // Theme Management
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -40,12 +44,10 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
-  // Sync Sound Style
   useEffect(() => {
-    setSoundStyle(soundStyle);
-  }, [soundStyle]);
+    if(setSoundStyle) setSoundStyle(soundStyle);
+  }, [soundStyle, setSoundStyle]);
 
-  // Trash Auto-Purge (48h)
   useEffect(() => {
      const now = new Date().getTime();
      setTransactions(prev => prev.filter(t => {
@@ -57,12 +59,11 @@ const App: React.FC = () => {
      }));
   }, []);
 
-  // Recurring Payments Check
   useEffect(() => {
       subscriptions.forEach(sub => {
           const today = new Date().toISOString().split('T')[0];
           if (sub.nextPaymentDate.startsWith(today)) {
-             const newTrans: Transaction = {
+             const newTrans = {
                  id: Date.now().toString() + Math.random(),
                  item: sub.name,
                  amount: sub.amount,
@@ -76,11 +77,13 @@ const App: React.FC = () => {
       })
   }, [subscriptions]);
 
-  const t = (key: string) => LOCALIZATION[key][language];
+  // Guard against missing localization
+  if (!LOCALIZATION) return <div className="flex h-screen items-center justify-center text-white">Loading Resources...</div>;
+  const t = (key) => LOCALIZATION[key][language];
 
-  const handleAddTransaction = (partial: Partial<Transaction>) => {
+  const handleAddTransaction = (partial) => {
     if (partial.item && partial.amount && partial.type && partial.category) {
-      const newTrans: Transaction = {
+      const newTrans = {
         id: Date.now().toString(),
         item: partial.item,
         amount: partial.amount,
@@ -94,26 +97,26 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSoftDelete = (id: string) => {
+  const handleSoftDelete = (id) => {
     setTransactions(prev => prev.map(t => 
         t.id === id ? { ...t, deletedAt: new Date().toISOString() } : t
     ));
     playSound('click');
   };
 
-  const handleRestore = (id: string) => {
+  const handleRestore = (id) => {
     setTransactions(prev => prev.map(t => 
         t.id === id ? { ...t, deletedAt: null } : t
     ));
     playSound('success');
   };
 
-  const handleTabChange = (tab: any) => {
+  const handleTabChange = (tab) => {
       playSound('click');
       setActiveTab(tab);
   }
 
-  const handleSoundChange = (style: SoundStyle) => {
+  const handleSoundChange = (style) => {
       setSoundStyle(style); 
       setSoundStyleState(style);
       if (style !== 'mute') {
@@ -123,8 +126,6 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-gray-100 dark:bg-premium-bg dark:text-premium-text-primary transition-colors duration-500">
-      
-      {/* Phone Container Mockup - Adaptive Background */}
       <div className={`
           relative w-full max-w-[480px] h-full sm:h-[92vh] sm:rounded-[40px] overflow-hidden 
           shadow-premium border-[8px] border-[#222] sm:border-gray-200 dark:sm:border-white/10
@@ -132,8 +133,6 @@ const App: React.FC = () => {
           bg-gray-50 dark:bg-premium-bg
           ${theme === 'dark' ? 'dark:bg-[radial-gradient(circle_at_50%_-20%,_#1c2333_0%,_#0D0F14_60%)]' : ''}
       `}>
-        
-        {/* Main Content Area */}
         <div className="h-full pb-[100px] overflow-hidden relative"> 
             <AnimatePresence mode="wait">
                 <motion.div 
@@ -144,7 +143,7 @@ const App: React.FC = () => {
                     transition={{ duration: 0.2 }}
                     className="h-full"
                 >
-                  {activeTab === 'home' && (
+                  {activeTab === 'home' && HomeView && (
                     <HomeView 
                       transactions={transactions} 
                       language={language} 
@@ -153,13 +152,13 @@ const App: React.FC = () => {
                       activeTrip={activeTrip}
                     />
                   )}
-                  {activeTab === 'calendar' && (
+                  {activeTab === 'calendar' && CalendarView && (
                      <CalendarView transactions={transactions} language={language} />
                   )}
-                  {activeTab === 'stats' && (
+                  {activeTab === 'stats' && StatsView && (
                     <StatsView transactions={transactions.filter(t => !t.deletedAt)} language={language} />
                   )}
-                  {activeTab === 'tools' && (
+                  {activeTab === 'tools' && ToolsView && (
                     <ToolsView 
                         transactions={transactions} 
                         subscriptions={subscriptions}
@@ -171,29 +170,27 @@ const App: React.FC = () => {
                     />
                   )}
                   
-                  {activeTab === 'settings' && (
+                  {activeTab === 'settings' && GlassPanel && (
                      <div className="p-6 pt-12 h-full overflow-y-auto no-scrollbar">
                         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{t('tab_settings')}</h1>
                         <div className="space-y-4 pb-24">
-                            {/* Theme */}
                             <GlassPanel className="overflow-hidden">
                                 <div className="flex justify-between items-center p-4">
                                     <span className="text-[15px] font-medium text-gray-900 dark:text-white flex items-center gap-2 whitespace-nowrap">
-                                        {theme === 'dark' ? <Moon size={18}/> : <Sun size={18}/>}
+                                        {Moon ? (theme === 'dark' ? <Moon size={18}/> : <Sun size={18}/>) : null}
                                         {t('settings_theme')}
                                     </span>
                                     <div className="flex bg-gray-200 dark:bg-black/40 p-1 rounded-xl">
                                         <button onClick={() => { playSound('click'); setTheme('light'); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${theme === 'light' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white'}`}>
-                                            <Sun size={12}/> {t('theme_light')}
+                                            {Sun && <Sun size={12}/>} {t('theme_light')}
                                         </button>
                                         <button onClick={() => { playSound('click'); setTheme('dark'); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${theme === 'dark' ? 'bg-premium-surface text-white shadow-sm' : 'text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white'}`}>
-                                            <Moon size={12}/> {t('theme_dark')}
+                                            {Moon && <Moon size={12}/>} {t('theme_dark')}
                                         </button>
                                     </div>
                                 </div>
                             </GlassPanel>
 
-                            {/* Language */}
                             <GlassPanel className="overflow-hidden">
                                 <div className="flex justify-between items-center p-4">
                                     <span className="text-[15px] font-medium text-gray-900 dark:text-white">{t('settings_language')}</span>
@@ -204,13 +201,12 @@ const App: React.FC = () => {
                                 </div>
                             </GlassPanel>
 
-                            {/* Sound Style Selector */}
                             <div className="space-y-4 mt-2">
                                 <h2 className="text-base font-bold text-gray-900 dark:text-white px-1 flex items-center gap-2">
-                                     <Volume2 size={18} className="text-blue-500"/> {t('settings_sound')}
+                                     {Volume2 && <Volume2 size={18} className="text-blue-500"/>} {t('settings_sound')}
                                 </h2>
                                 <div className="grid grid-cols-2 gap-3">
-                                    {(Object.keys(SOUND_STYLES) as SoundStyle[]).map((style) => (
+                                    {SOUND_STYLES && Object.keys(SOUND_STYLES).map((style) => (
                                         <button
                                             key={style}
                                             onClick={() => handleSoundChange(style)}
@@ -227,7 +223,7 @@ const App: React.FC = () => {
                                             {soundStyle === style && (
                                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                                     <div className="bg-white/20 p-1 rounded-full backdrop-blur-sm">
-                                                        <Check size={10} strokeWidth={4} className="text-white" />
+                                                        {Check && <Check size={10} strokeWidth={4} className="text-white" />}
                                                     </div>
                                                 </div>
                                             )}
@@ -248,14 +244,15 @@ const App: React.FC = () => {
             </AnimatePresence>
         </div>
 
-        {/* Floating Premium Tab Bar */}
         <div className="absolute bottom-8 left-6 right-6 z-50">
             <div className="flex justify-between items-center px-6 py-4 rounded-[32px] bg-white/80 dark:bg-[#161922]/80 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-premium-hover">
                 {['home', 'calendar', 'tools', 'stats', 'settings'].map((tab) => {
                     const isActive = activeTab === tab;
                     const Icon = tab === 'home' ? Home : tab === 'calendar' ? Calendar : tab === 'tools' ? Grid : tab === 'stats' ? BarChart2 : Settings;
+                    // Guard against undefined Icon component from lazy import issues
+                    if (!Icon) return null;
                     return (
-                        <button key={tab} onClick={() => handleTabChange(tab as any)} className={`relative p-2 transition-all ${isActive ? 'text-black dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}>
+                        <button key={tab} onClick={() => handleTabChange(tab)} className={`relative p-2 transition-all ${isActive ? 'text-black dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}>
                             <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
                             {isActive && <motion.div layoutId="tab-glow" className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-black dark:bg-white rounded-full" />}
                         </button>
@@ -264,16 +261,18 @@ const App: React.FC = () => {
             </div>
         </div>
 
-        <VoiceInput 
-          isOpen={isVoiceOpen} 
-          onClose={() => setIsVoiceOpen(false)}
-          onSave={handleAddTransaction}
-          language={language}
-        />
+        {VoiceInput && (
+            <VoiceInput 
+            isOpen={isVoiceOpen} 
+            onClose={() => setIsVoiceOpen(false)}
+            onSave={handleAddTransaction}
+            language={language}
+            />
+        )}
 
       </div>
     </div>
   );
 };
 
-export default App;
+(window as any).App = App;
