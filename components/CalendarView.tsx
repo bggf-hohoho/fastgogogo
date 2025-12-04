@@ -1,17 +1,22 @@
 import React, { useMemo, useState } from 'react';
+import { Transaction, Language } from '../types';
+import { LOCALIZATION, CATEGORY_ICONS } from '../constants';
+import { GlassPanel, TiltCard } from './VisionUI';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const CalendarView = ({ transactions, language }) => {
-  const LOCALIZATION = (window as any).LOCALIZATION;
-  const CATEGORY_ICONS = (window as any).CATEGORY_ICONS;
-  const GlassPanel = (window as any).GlassPanel;
+interface CalendarViewProps {
+  transactions: Transaction[];
+  language: Language;
+}
 
+const CalendarView: React.FC<CalendarViewProps> = ({ transactions, language }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
-  const t = (key) => LOCALIZATION[key][language];
+  const t = (key: string) => LOCALIZATION[key][language];
 
+  // Helper to get days in month
   const calendarDays = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -19,13 +24,15 @@ const CalendarView = ({ transactions, language }) => {
     const lastDay = new Date(year, month + 1, 0);
     const days = [];
     
+    // Pad start
     for (let i = 0; i < firstDay.getDay(); i++) days.push(null);
+    // Days
     for (let i = 1; i <= lastDay.getDate(); i++) days.push(new Date(year, month, i));
 
     return days;
   }, [currentDate]);
 
-  const getDailyData = (date) => {
+  const getDailyData = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
     const dayTrans = transactions.filter(t => t.timestamp.startsWith(dateStr) && !t.deletedAt);
     const expense = dayTrans.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
@@ -33,16 +40,15 @@ const CalendarView = ({ transactions, language }) => {
     return { expense, income, transactions: dayTrans };
   };
 
-  const changeMonth = (delta) => {
+  const changeMonth = (delta: number) => {
     setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + delta)));
   };
 
   const selectedData = useMemo(() => getDailyData(selectedDate), [selectedDate, transactions]);
 
-  if (!GlassPanel) return null;
-
   return (
     <div className="h-full pt-12 px-4 flex flex-col pb-24 overflow-y-auto no-scrollbar">
+       {/* Header */}
        <div className="flex justify-between items-center mb-6 px-2">
          <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
@@ -56,6 +62,7 @@ const CalendarView = ({ transactions, language }) => {
          </div>
        </div>
 
+       {/* Calendar Grid */}
        <GlassPanel className="p-4 !bg-white dark:!bg-[#161922] mb-6 shadow-sm dark:shadow-premium">
          <div className="grid grid-cols-7 gap-y-2 gap-x-1">
             {['S','M','T','W','T','F','S'].map((d,i) => (
@@ -66,6 +73,7 @@ const CalendarView = ({ transactions, language }) => {
                 if (!day) return <div key={`empty-${idx}`} />;
                 
                 const { expense, income, transactions } = getDailyData(day);
+                const hasActivity = transactions.length > 0;
                 const isSelected = day.toDateString() === selectedDate.toDateString();
                 const isToday = day.toDateString() === new Date().toDateString();
 
@@ -84,6 +92,7 @@ const CalendarView = ({ transactions, language }) => {
                     >
                         <span className="text-xs font-semibold z-10">{day.getDate()}</span>
                         
+                        {/* Status Dots */}
                         <div className="flex gap-0.5 mt-1 h-1">
                              {expense > 0 && <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white/70' : 'bg-red-500'}`} />}
                              {income > 0 && <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white/70' : 'bg-green-500'}`} />}
@@ -94,6 +103,7 @@ const CalendarView = ({ transactions, language }) => {
          </div>
        </GlassPanel>
 
+       {/* Selected Day Details */}
        <AnimatePresence mode="wait">
             <motion.div
                 key={selectedDate.toISOString()}
@@ -140,4 +150,4 @@ const CalendarView = ({ transactions, language }) => {
   );
 };
 
-(window as any).CalendarView = CalendarView;
+export default CalendarView;

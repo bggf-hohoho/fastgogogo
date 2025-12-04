@@ -1,20 +1,25 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, TrendingUp, TrendingDown, Plane, ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Plane, Wallet, ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
+import { Transaction, Language, Category, Trip } from '../types';
+import { LOCALIZATION, CATEGORY_LABELS, CATEGORY_COLORS, CATEGORY_ICONS } from '../constants';
+import { GlassPanel, VisionButton, FloatingText, TiltCard } from './VisionUI';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip }) => {
-  const LOCALIZATION = (window as any).LOCALIZATION;
-  const CATEGORY_LABELS = (window as any).CATEGORY_LABELS;
-  const CATEGORY_COLORS = (window as any).CATEGORY_COLORS;
-  const CATEGORY_ICONS = (window as any).CATEGORY_ICONS;
-  const GlassPanel = (window as any).GlassPanel;
-  const TiltCard = (window as any).TiltCard;
+interface HomeViewProps {
+  transactions: Transaction[];
+  language: Language;
+  onOpenVoice: () => void;
+  onDelete: (id: string) => void;
+  activeTrip: Trip | null;
+}
 
-  const [filterType, setFilterType] = useState('all');
+const HomeView: React.FC<HomeViewProps> = ({ transactions, language, onOpenVoice, onDelete, activeTrip }) => {
+  const [filterType, setFilterType] = useState<'all' | 'expense' | 'income'>('all');
   
-  const t = (key) => LOCALIZATION[key][language];
-  const tCat = (cat) => CATEGORY_LABELS[cat][language];
+  const t = (key: string) => LOCALIZATION[key][language];
+  const tCat = (cat: Category) => CATEGORY_LABELS[cat][language];
 
+  // Logic: Filter out deleted items, then apply type filter, then trip filter
   const visibleTransactions = useMemo(() => {
     return transactions
       .filter(t => !t.deletedAt)
@@ -23,14 +28,15 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
   }, [transactions, filterType]);
 
   const { income, expense, balance } = useMemo(() => {
-    const validTrans = transactions.filter(t => !t.deletedAt); 
+    const today = new Date().toISOString().split('T')[0];
+    const validTrans = transactions.filter(t => !t.deletedAt); // Calculate global balance
     const income = validTrans.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const expense = validTrans.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     return { income, expense, balance: income - expense };
   }, [transactions]);
 
   const grouped = useMemo(() => {
-    const groups = {};
+    const groups: Record<string, Transaction[]> = {};
     visibleTransactions.forEach(e => {
       const dateKey = e.timestamp.split('T')[0];
       if (!groups[dateKey]) groups[dateKey] = [];
@@ -39,18 +45,18 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
     return groups;
   }, [visibleTransactions]);
 
-  const formatTime = (iso) => new Date(iso).toLocaleTimeString(language === 'zh-TW' ? 'zh-TW' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-  const formatDateHeader = (iso) => {
+  const formatTime = (iso: string) => new Date(iso).toLocaleTimeString(language === 'zh-TW' ? 'zh-TW' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+  const formatDateHeader = (iso: string) => {
       const d = new Date(iso);
       const today = new Date().toISOString().split('T')[0];
       if (iso === today) return language === 'zh-TW' ? '今天' : 'Today';
       return d.toLocaleDateString(language === 'zh-TW' ? 'zh-TW' : 'en-US', { month: 'short', day: 'numeric', weekday: 'short' });
   };
 
-  if (!TiltCard) return null; // Wait for load
-
   return (
     <div className="flex flex-col h-full relative px-5 pt-8">
+      
+      {/* Travel Mode Indicator */}
       <AnimatePresence>
       {activeTrip && (
         <motion.div 
@@ -64,6 +70,7 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
       )}
       </AnimatePresence>
 
+      {/* Hero Card - Adaptive Light/Dark */}
       <div className="mb-8 relative z-20">
          <TiltCard>
             <div className={`
@@ -71,10 +78,12 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
                 bg-white border-gray-100 text-gray-900
                 dark:bg-[#161922] dark:border-white/10 dark:text-white
             `}>
+                 {/* Background Effects (Dark Mode only) */}
                  <div className="absolute inset-0 bg-[#161922] z-0 opacity-0 dark:opacity-100 transition-opacity duration-500" />
                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/30 rounded-full blur-[50px] z-0 opacity-0 dark:opacity-100 transition-opacity duration-500" />
                  <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-500/20 rounded-full blur-[50px] z-0 opacity-0 dark:opacity-100 transition-opacity duration-500" />
                  
+                 {/* Light Mode Subtle Gradient */}
                  <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50 to-gray-100 z-0 opacity-100 dark:opacity-0 transition-opacity duration-500" />
 
                  <div className="relative z-10">
@@ -85,6 +94,7 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
                              </div>
                              <span className="text-gray-500 dark:text-white/60 text-xs font-medium tracking-wide uppercase">{t('home_today')}</span>
                         </div>
+                        {/* Status Dot */}
                         <div className="flex items-center gap-1.5 px-2 py-1 rounded-full border bg-black/5 border-black/5 dark:bg-black/20 dark:border-white/5">
                             <div className="w-1.5 h-1.5 bg-green-500 dark:bg-green-400 rounded-full shadow-[0_0_8px_rgba(74,222,128,0.5)] animate-pulse" />
                             <span className="text-[10px] text-gray-500 dark:text-white/50 font-medium">{t('status_active')}</span>
@@ -127,12 +137,13 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
          </TiltCard>
       </div>
 
+      {/* Filter Tabs */}
       <div className="flex justify-center mb-6">
           <div className="flex p-1 bg-white dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10 shadow-sm">
              {['all', 'expense', 'income'].map((f) => (
                  <button
                     key={f} 
-                    onClick={() => setFilterType(f)}
+                    onClick={() => setFilterType(f as any)}
                     className={`
                         px-6 py-1.5 rounded-full text-xs font-medium transition-all duration-300
                         ${filterType === f 
@@ -148,6 +159,7 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
           </div>
       </div>
 
+      {/* Transactions List */}
       <div className="flex-1 overflow-y-auto pb-32 no-scrollbar -mx-5 px-5 mask-gradient-b">
         <AnimatePresence>
             {Object.keys(grouped).map((dateKey) => (
@@ -182,6 +194,7 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
                             dark:bg-[#1D212C]/60 dark:border-white/5 dark:hover:bg-[#1D212C] dark:hover:border-white/10 dark:backdrop-blur-md
                         `}>
                             <div className="flex items-center gap-4">
+                                {/* Colorful Icon Container */}
                                 <div className={`
                                     w-11 h-11 rounded-2xl flex items-center justify-center text-lg shadow-lg bg-gradient-to-br
                                     ${CATEGORY_COLORS[t.category] || 'bg-gray-500'} bg-opacity-100 text-white
@@ -204,6 +217,7 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
                             </span>
                         </div>
                         
+                        {/* Swipe Action (Desktop Hover) */}
                         <button 
                             onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
                             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white z-20 scale-90 hover:scale-100 shadow-lg backdrop-blur-md"
@@ -233,4 +247,4 @@ const HomeView = ({ transactions, language, onOpenVoice, onDelete, activeTrip })
   );
 };
 
-(window as any).HomeView = HomeView;
+export default HomeView;
