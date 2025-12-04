@@ -205,9 +205,9 @@ const App: React.FC = () => {
                             </GlassPanel>
 
                             {/* Sound Style Selector */}
-                            <div className="space-y-3">
-                                <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-premium-text-secondary px-2 flex items-center gap-2">
-                                     <Volume2 size={14}/> {t('settings_sound')}
+                            <div className="space-y-4 mt-2">
+                                <h2 className="text-base font-bold text-gray-900 dark:text-white px-1 flex items-center gap-2">
+                                     <Volume2 size={18} className="text-blue-500"/> {t('settings_sound')}
                                 </h2>
                                 <div className="grid grid-cols-2 gap-3">
                                     {(Object.keys(SOUND_STYLES) as SoundStyle[]).map((style) => (
@@ -215,18 +215,20 @@ const App: React.FC = () => {
                                             key={style}
                                             onClick={() => handleSoundChange(style)}
                                             className={`
-                                                relative w-full p-3 rounded-2xl flex flex-col items-center justify-center text-center transition-all duration-300 group min-h-[80px] border
+                                                relative w-full py-4 px-2 rounded-2xl flex items-center justify-center text-center transition-all duration-200 border
                                                 ${soundStyle === style 
-                                                    ? 'bg-blue-50 dark:bg-premium-blue/10 border-blue-500 dark:border-premium-blue shadow-glow-blue' 
-                                                    : 'bg-white dark:bg-premium-card/40 border-gray-200 dark:border-premium-border hover:bg-gray-50 dark:hover:bg-premium-card'}
+                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/25 scale-[1.02]' 
+                                                    : 'bg-white dark:bg-premium-card/40 border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}
                                             `}
                                         >
-                                            <span className={`text-xs font-medium ${soundStyle === style ? 'text-blue-600 dark:text-premium-blue' : 'text-gray-500 dark:text-premium-text-secondary group-hover:text-black dark:group-hover:text-white'}`}>
+                                            <span className="text-sm font-semibold tracking-wide">
                                                 {SOUND_STYLES[style][language]}
                                             </span>
                                             {soundStyle === style && (
-                                                <div className="absolute top-2 right-2 text-blue-600 dark:text-premium-blue">
-                                                    <Check size={12} />
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                    <div className="bg-white/20 p-1 rounded-full backdrop-blur-sm">
+                                                        <Check size={10} strokeWidth={4} className="text-white" />
+                                                    </div>
                                                 </div>
                                             )}
                                         </button>
