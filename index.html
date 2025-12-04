@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>LazyLedger - Vision OS Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              premium: {
+                bg: '#0D0F14',
+                card: '#161922',
+                surface: '#1D212C',
+                blue: '#2F8CFF',
+                green: '#3ED27A',
+                gold: '#F8D37A',
+                red: '#FF453A',
+                text: {
+                  primary: '#FFFFFF',
+                  secondary: '#A7AABB',
+                  muted: 'rgba(255, 255, 255, 0.4)'
+                },
+                border: 'rgba(255, 255, 255, 0.08)'
+              }
+            },
+            fontFamily: {
+              sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+            },
+            boxShadow: {
+              'premium': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+              'premium-hover': '0 12px 40px 0 rgba(0, 0, 0, 0.4)',
+              'glow-blue': '0 0 20px rgba(47, 140, 255, 0.4)',
+              'glow-gold': '0 0 20px rgba(248, 211, 122, 0.3)',
+            },
+            backdropBlur: {
+              'xs': '2px',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      body {
+        -webkit-tap-highlight-color: transparent;
+        background-color: #F3F4F6; /* Default Light Mode */
+        margin: 0;
+        overflow: hidden;
+        color: #111827; /* Gray-900 */
+      }
+      
+      html.dark body {
+        background-color: #0D0F14;
+        color: #FFFFFF;
+      }
+      
+      #root {
+        min-height: 100vh;
+        /* Background managed by App.tsx */
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/": "https://esm.sh/react@18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.292.0?external=react",
+    "recharts": "https://esm.sh/recharts@2.12.7?external=react,react-dom",
+    "framer-motion": "https://esm.sh/framer-motion@10.16.16?external=react,react-dom"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

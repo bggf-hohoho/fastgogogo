@@ -1,0 +1,7 @@
+{
+  "name": "LazyLedger (懶人語音記帳本aka快速記帳)",
+  "description": "A voice-first minimal expense tracker supporting English and Traditional Chinese. Features AI-powered categorization and spending insights.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
